@@ -27,8 +27,14 @@ For each hidden state in decoder (at time step i), we calculate scores with each
 
 ![equ3](https://www.zhihu.com/equation?tex=e_%7Bij%7D+%3D+score%28s_i%2C+h_j%29)
 
-Then we can get the weight of each hidden state in encoder for any hidden state j in decoder and get the weighted average context vector：
+Then we can get the weight of each hidden state in encoder for any hidden state j in decoder and get the weighted average context vector ci：
 
 ![equ4](https://www.zhihu.com/equation?tex=%5Calpha_%7Bij%7D+%3D+%5Cfrac%7Bexp%28e_%7Bij%7D%29%7D%7B%5Csum_%7Bk%3D1%7D%5E%7BT_x%7Dexp%28e_%7Bik%7D%29%7D)
+
 ![equ5](https://www.zhihu.com/equation?tex=c_i+%3D+%5Csum_%7Bj%3D1%7D%5E%7BT_x%7D+%5Calpha_%7Bij%7Dh_j)
 
+Finally, we concatenate ci and si, and apply softmax on this new vector:
+
+![equ6](https://www.zhihu.com/equation?tex=%5Chat%7Bs_t%7D+%3D+tanh%28W_c%5Bc_t%3Bs_t%5D%29)
+
+![equ7](https://www.zhihu.com/equation?tex=p%28y_t%7Cy_%7B%3Ct%7D%2Cx%29+%3D+softmax%28W_s%5Chat%7Bs_t%7D%29)
