@@ -39,6 +39,10 @@ Finally, we concatenate ci and si, and apply softmax on this new vector:
 
 ![equ7](https://www.zhihu.com/equation?tex=p%28y_t%7Cy_%7B%3Ct%7D%2Cx%29+%3D+softmax%28W_s%5Chat%7Bs_t%7D%29)
 
+As for the score function, usually, there are there methods:
+
+![equ8](https://pic3.zhimg.com/80/v2-129287642af2e34d7e9e0afea9ae766e_hd.jpg)
+
 ## Transformer
 
 
