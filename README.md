@@ -13,4 +13,10 @@ The following comes from: https://zhuanlan.zhihu.com/p/40920384
 
 ![attention1](https://pic4.zhimg.com/80/v2-8ddf993a95ee6e525fe2cd5ccd49bba7_hd.jpg)
 
+Input: x = (x1, x2, ..., xt), Output: y = (y1, y2, ..., yt)
+
+For each encoder cell:
 ![equ1](https://www.zhihu.com/equation?tex=h_t+%3D+RNN_%7Benc%7D%28x_t%2C+h_%7Bt-1%7D%29)
+
+For each decoder cell:
+![equ2](https://www.zhihu.com/equation?tex=s_t+%3D+RNN_%7Bdec%7D%28%5Chat%7By_%7Bt-1%7D%7D%2Cs_%7Bt-1%7D%29)
