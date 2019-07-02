@@ -38,3 +38,7 @@ Finally, we concatenate ci and si, and apply softmax on this new vector:
 ![equ6](https://www.zhihu.com/equation?tex=%5Chat%7Bs_t%7D+%3D+tanh%28W_c%5Bc_t%3Bs_t%5D%29)
 
 ![equ7](https://www.zhihu.com/equation?tex=p%28y_t%7Cy_%7B%3Ct%7D%2Cx%29+%3D+softmax%28W_s%5Chat%7Bs_t%7D%29)
+
+## Transformer
+
+
