@@ -13,7 +13,7 @@ The following comes from: https://zhuanlan.zhihu.com/p/40920384
 
 ![attention1](https://pic4.zhimg.com/80/v2-8ddf993a95ee6e525fe2cd5ccd49bba7_hd.jpg)
 
-Input: x = (x1, x2, ..., xt), Output: y = (y1, y2, ..., yt)
+Input: x = (x1, x2, ..., xt_x), Output: y = (y1, y2, ..., yt_y)
 
 For each encoder cell, the hidden state output at time step t:
 
