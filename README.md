@@ -90,6 +90,10 @@ Note: In general attention mechanism, Q is the decoder hidden layer, K and V are
 
 Scaled dot-product attention:
 
+Here is a clear example:
+
+![self_attention](https://img-blog.csdnimg.cn/20181211144611901.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3BpcGlzb3JyeQ==,size_16,color_FFFFFF,t_70)
+
 ![equ3](http://www.zhihu.com/equation?tex=Attention%28Q%2C+K%2C+V%29+%3D+softmax%28%5Cfrac%7BQK%5ET%7D%7B%5Csqrt%7Bd_k%7D%7D%29V+%5C%5C)
 
 Although it's called as multi-head, in practice, it's implemented by transposing and reshaping tensors, not separating tensors.
