@@ -45,4 +45,15 @@ As for the score function, usually, there are there methods:
 
 ## Transformer
 
+Refer to: https://blog.csdn.net/pipisorry/article/details/84946653
 
+For the seq-to-seq problem, transformer uses scaled dot-product attention and multi-head attention instead of the traditional cnn or rnn architecture. 
+
+Traditional rnn models like LSTM or GRU have certain drawbacks:
+1. Sequencial calculation impedes parallel computing ability.
+2. Lack of long dependency information.
+
+Encoder = 6 * (self-attention + FFNN)
+Decoder = 6 * (self-attention + encoder-decoder attention + FFNN), which uses outputs from encoder as inputs
+
+![t1](https://img-blog.csdnimg.cn/20181211141356770.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3BpcGlzb3JyeQ==,size_16,color_FFFFFF,t_70)
