@@ -54,6 +54,58 @@ Traditional rnn models like LSTM or GRU have certain drawbacks:
 2. Lack of long dependency information.
 
 Encoder = 6 * (self-attention + FFNN)
-Decoder = 6 * (self-attention + encoder-decoder attention + FFNN), which uses outputs from encoder as inputs
+Decoder = 6 * (self-attention + encoder-decoder attention + FFNN), which uses outputs from encoder as inputs.
 
 ![t1](https://img-blog.csdnimg.cn/20181211141356770.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3BpcGlzb3JyeQ==,size_16,color_FFFFFF,t_70)
+
+![t2](https://img-blog.csdnimg.cn/20181211142214247.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3BpcGlzb3JyeQ==,size_16,color_FFFFFF,t_70)
+
+Transformer is the first transduction model relying entirely on self-attention to compute representations of its input and output without using sequence aligned RNNs or convolution.
+
+![t3](https://img-blog.csdnimg.cn/20181210220041386.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3BpcGlzb3JyeQ==,size_16,color_FFFFFF,t_70)
+
+Now we dig more into each block in encoder and decoder:
+
+### Each encoder block
+Multi-head self-attention mechanism + fully connected feed-forward network
+
+#### Multi-head self-attention mechanism
+Multi-head attention + residual connection + normalization
+
+Multi-head attention:
+
+Linear + scaled dot-product attention + concat + linear
+
+Input: Query, Key, Value
+
+Apply h different linear tranformations on Q,K,V, then concatenate all attention outputs. 
+
+![equ1](https://www.zhihu.com/equation?tex=MultiHead%28Q%2C+K%2C+V%29+%3D+Concat%28head_1%2C+...%2C+head_h%29W%5EO+%5C%5C)
+
+![equ2](http://www.zhihu.com/equation?tex=head_i+%3D+Attention%28QW_i%5EQ%2C+KW_i%5EK%2C+VW_i%5EV%29+%5C%5C)
+
+![mh attention](https://mchromiak.github.io/articles/2017/Sep/12/Transformer-Attention-is-all-you-need/img/MultiHead.png)
+
+Note: In general attention mechanism, Q is the decoder hidden layer, K and V are the encoder hidden layer. While in self-attention, Q=K=V=sum of input embedding and positional embedding of encoder or decoder.
+
+Scaled dot-product attention:
+
+![equ3](http://www.zhihu.com/equation?tex=Attention%28Q%2C+K%2C+V%29+%3D+softmax%28%5Cfrac%7BQK%5ET%7D%7B%5Csqrt%7Bd_k%7D%7D%29V+%5C%5C)
+
+Although it's called as multi-head, in practice, it's implemented by transposing and reshaping tensors, not separating tensors.
+
+#### Position-wise feed-forward networks
+If the output of multi-head attention is Z, then:
+
+![equ4](https://www.zhihu.com/equation?tex=%5Ctext%7BFFN%7D%28Z%29+%3D+max%280%2C+ZW_1+%2Bb_1%29W_2+%2B+b_2+%5Ctag2)
+
+### Each decoder block
+Same as encoder block, except that it has an attention sublayer. 
+
+Notice that the input of whole decoder is the last output of decoder (output from position i-1 as the input of position i) and the output from encoder. Besides, we can apply parallel computing on encoder, however, as for decoder, just like rnn model, we can only use the last (and before) position's output as input. 
+
+### Positional Encoding 
+Without position information, transformer is just a high-level word-bag model. In order to represent sequence information, positional encoding is added on the input embedding. 
+
+## Bert
+
