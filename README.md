@@ -66,7 +66,7 @@ Transformer is the first transduction model relying entirely on self-attention t
 
 Now we dig more into each block in encoder and decoder:
 
-### Each encoder block
+### 1. Each encoder block
 Multi-head self-attention mechanism + fully connected feed-forward network
 
 #### Multi-head self-attention mechanism
@@ -99,12 +99,12 @@ If the output of multi-head attention is Z, then:
 
 ![equ4](https://www.zhihu.com/equation?tex=%5Ctext%7BFFN%7D%28Z%29+%3D+max%280%2C+ZW_1+%2Bb_1%29W_2+%2B+b_2+%5Ctag2)
 
-### Each decoder block
+### 2. Each decoder block
 Same as encoder block, except that it has an attention sublayer. 
 
 Notice that the input of whole decoder is the last output of decoder (output from position i-1 as the input of position i) and the output from encoder. Besides, we can apply parallel computing on encoder, however, as for decoder, just like rnn model, we can only use the last (and before) position's output as input. 
 
-### Positional Encoding 
+### 3. Positional Encoding 
 Without position information, transformer is just a high-level word-bag model. In order to represent sequence information, positional encoding is added on the input embedding. 
 
 ## Bert
