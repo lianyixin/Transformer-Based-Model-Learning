@@ -112,4 +112,20 @@ Notice that the input of whole decoder is the last output of decoder (output fro
 Without position information, transformer is just a high-level word-bag model. In order to represent sequence information, positional encoding is added on the input embedding. 
 
 ## Bert
+以下出于时间效率考虑，换成中文来写。主要简单记录下对这些预训练语言模型相对粗浅的理解，以防遗忘。
 
+Bert区别于gpt这些模型的要点在于是双向结构，而非单向。专业术语描述是auto encoder模型而非auto regression模型。单向的意思指的是自然语句预测下一个单词时，是利用该单词上文信息单向预测，没有用到下文信息。gpt的实现方案就是以transformer架构作为基础模块、单元，如下图所示，以当前关注对象左边的所有输入作为transformer cell的输入，依次从左到右预测。该方案虽然很适合于文本生成任务，但是伴随的缺点是没有捕获当前关注对象的下文信息。显然，人类的自然语言是上下文相关的，前面的话语的理解有时候需要下文的说明才会明白整句话的含义。bert基于此，将下文信息从右到左传递，以期让当前关注对象同时获得上下文信息。值得注意的是gpt的从左到右架构，模型在训练或预测的时候只用到了上文的信息预测当前关注对象，当前关注对象的准确值不作为输入（因为当前关注对象是作为它的下一个单词的上文输入），而是作为gold value来和predict value对比求loss，因此不需要掩盖（mask）该对象（不会有信息泄露问题）。但是bert不一样，为了利用上下文的信息，并且同时保证当前关注对象不会信息泄露，所以需要将当前关注对象的value值mask，用mask作为输入，其他词照常输入。这带来了一个挑战，如果整句话训练的时候每次只有一个单词mask，计算效率太低，因此该论文提出将15%左右的输入mask掉，提高效率，同时又不能太多mask，否则失去了大量的有效信息。第二个挑战就是老生常谈的训练和预测不匹配问题。最终预测时整句话的输入是没有mask值的，与训练过程的范式不一致。至于其他例如position embedding和训练任务定义这里就不详述。
+
+Bert区别于elmo的要点在于用transformer架构替换双LSTM架构。用自注意力模型实现长文本依赖提取，解决LSTM在长文本上的不足。这里值得注意的一点是，LSTM在局部关系的获取能力较强。在文本生成任务，从偏离样本采样纠错的过程中，由于LSTM能做到局部修正，因此如果能逐步修正近距离词，就可以将坏句子修复。而transformer严重依赖位置信息，所以在两句不合理的句子之间，其很难分辨哪种不合理更好一些。
+
+综上bert一个比较明显的缺点是预测训练过程不匹配，以及其范式在文本生成任务天然不利。并且由于采用transformer的架构，会带来其固有的一些问题。
+
+同时需要注意，这里提到的所有语言模型依然是以统计作为基础的学习。不具备推理能力。
+
+![pretrained-language-model](https://lilianweng.github.io/lil-log/assets/images/language-model-comparison.png)
+
+## xlnet
+xlnet主要解决bert在文本生成上的短板，以及预测训练不匹配的问题。主要是：
+1. 将auto encode模型换成auto regression模型的思路，即类似LSTM或gpt从左到右单向传播。但是为了利用上下文的信息，所以引入了排序机制。
+
+生成重复单词
