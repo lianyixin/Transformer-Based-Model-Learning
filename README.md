@@ -137,4 +137,10 @@ xlnet主要解决bert在文本生成上的短板，以及预测训练不匹配�
 ## prophetnet
 在下文中会介绍两个transformer的变形，主要是基于transformer自身结构的调整，没有应用预训练语言模型架构。prophetnet网络的出发点是，在seq2seq问题或者传统的自回归问题背景下，transformer利用上文信息进行下一个单词的预测，因为1.只参考局部信息，2.加上两元组合比长依赖关系更加强烈，3.只预测一个单词，没有捕捉到未来的字符，4.在decode的过程采用贪婪解码，倾向于维持局部一致性，所以整体来说全局一致性和长依赖欠拟合。
 
-为了解决这个问题，prophetnet很自然地提出了将之前只预测下一个单词的结构改成预测n-gram的结构。例如bigram即预测后面两个单词。值得注意的是，这边是直接用上文的信息同时预测后面n个单词，而不是将预测出来的单词再次作为输入。基于此，可能一开始想到的最基本的思想就是，网络最后一层的输出在dictionary size大小的vector里选择n个id作为输出，这对网络提出比较大的挑战。prophetnet的改进思路是借鉴xlnet，
+为了解决这个问题，prophetnet很自然地提出了将之前只预测下一个单词的结构改成预测n-gram的结构。例如bigram即预测后面两个单词。值得注意的是，这边是直接用上文的信息同时预测后面n个单词，而不是将预测出来的单词再次作为输入。基于此，可能一开始想到的最基本的思想就是，网络最后一层的输出在dictionary size大小的vector里选择n个id作为输出，这个的问题是不知道预测出来的单词的顺序。prophetnet的改进思路是借鉴xlnet的双流机制，n+1个输入预测n个后面的单词，第一个是跟原本网络一样的main stream self-attention，另外n个是predict stream self-attention。要注意这n+1个网络共享参数。
+
+![](https://image.jiqizhixin.com/uploads/editor/46bf29d6-4f6b-4c42-8911-27d310fafdb6/640.png)
+
+训练任务文章称因为不能获得大量标注数据，所以采用mass, bart等采用的去噪自编码（用噪音破坏输入序列，任务是恢复原始的输入序列）任务来训练，如下图。
+
+![](https://image.jiqizhixin.com/uploads/editor/7bd7bcb7-72a5-4ef3-9c98-b4ef44debce7/640.png)
