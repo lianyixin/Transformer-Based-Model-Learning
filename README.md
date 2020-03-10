@@ -148,9 +148,11 @@ xlnet主要解决bert在文本生成上的短板，以及预测训练不匹配�
 ## Reformer
 reformer的起步思想主要是解决transformer在长序列问题计算效率、存储效率过低的问题。因此在深入了解reformer之前，需要了解为什么transformer或者更广泛来说神经网络占用memory很大。可以参考这篇文章的总结：https://zhuanlan.zhihu.com/p/31558973。
 
-在reformer文章里，作者主要提到：1. 最大transformer最大单层参数就占用2GB，输入的长序列64k token，1024embedding size，batch 8又要占用2GB。2.用来训练bert的corpus占用17GB。3. 实际N层是单层的N倍，每一层的输出都要存储作为下一层的输入。4. 前馈层dff比注意力层dmodel深度更深，占用更多memory。5. 输入序列长度L的注意力计算就是O(L^2)，64k的序列输入就可以耗光memory。
+在reformer文章里，作者主要提到：1. 最大transformer最大单层参数就占用2GB，输入的长序列64k token，1024embedding size，batch 8又要占用2GB。2.用来训练bert的corpus占用17GB。3. 实际N层是单层的N倍，每一层的activation输出都要存储作为下一层的输入。4. 前馈层dff比注意力层dmodel深度更大，占用一大部分memory。5. 输入序列长度L的attention注意力计算就是O(L^2)，64k的序列输入就可以耗光memory。
 
 所以针对这些，reformer提出：1. 可逆层，仅存储一层激活输出副本，缓解N倍的问题；2.关于前馈层深度更深的问题，将activation分离开来，用分块来处理它们，缓解dff深度问题；3. 用局部敏感哈希计算注意力，实现O(L^2) to O(LlogL)。
+
+
 
 
 
