@@ -148,9 +148,14 @@ xlnet主要解决bert在文本生成上的短板，以及预测训练不匹配�
 ## Reformer
 reformer的起步思想主要是解决transformer在长序列问题计算效率、存储效率过低的问题。因此在深入了解reformer之前，需要了解为什么transformer或者更广泛来说神经网络占用memory很大。可以参考这篇文章的总结：https://zhuanlan.zhihu.com/p/31558973。
 
-在reformer文章里，作者主要提到：1. 最大transformer最大单层参数就占用2GB，输入的长序列64k token，1024embedding size，batch 8又要占用2GB。2.用来训练bert的corpus占用17GB。3. 实际N层是单层的N倍，每一层的activation输出都要存储作为下一层的输入。4. 前馈层dff比注意力层dmodel深度更大，占用一大部分memory。5. 输入序列长度L的attention注意力计算就是O(L^2)，64k的序列输入就可以耗光memory。
+在reformer文章里，作者主要提到：1. 最大transformer最大单层参数就占用2GB，输入的长序列64k token，1024embedding size，batch 8又要占用2GB。2.用来训练bert的corpus占用17GB。3. 实际transformer N层是单层的N倍，每一层的activation输出都要存储，因为计算反向梯度的时候会用到每一层的activation输出。4. 前馈层dff比注意力层dmodel深度更大，占用一大部分memory。5. 输入序列长度L的attention注意力计算就是O(L^2)，64k的序列输入就可以耗光memory。
 
-所以针对这些，reformer提出：1. 可逆层，仅存储一层激活输出副本，缓解N倍的问题；2.关于前馈层深度更深的问题，将activation分离开来，用分块来处理它们，缓解dff深度问题；3. 用局部敏感哈希计算注意力，实现O(L^2) to O(LlogL)。
+所以针对这些，reformer提出：
+1. 针对transformer N层结构需要存储N层activation，借鉴可逆层提出revnet来代替transformer的resnet结构，仅存储一层激活输出副本，反向推导出每一层的激活，用时间换空间的方式节省每一层激活的空间存储。具体参考这个[链接](https://www.cnblogs.com/gczr/p/12181354.html)
+2. 关于前馈层深度更深的问题，认为前馈层的计算独立于输入序列的各个位置，所以将activation分块成多个chunk，也是用时间换空间的方式，降低存储压力。同时将revnet的输入输出也分块。
+3. 针对计算自注意力时需要O(L^2)的时间和空间复杂度，考虑改进算法将其计算和空间复杂度提升到O(LlogL)。具体做法是认为softmax获得attention的方式是稀疏的，本质attention会比较关注权重较大的key，因此只要将attention权重最大的32或64个key找到即可。故而借鉴最近邻算法，用哈希方式将各个向量编码，通过排序的方式把相近的向量聚集在同个bucket。不过该方式无法保证每个bucket里一定有query或者key，作者将Q投影矩阵认为与K投影矩阵相等，因此相当于只在query或者key所有向量里做哈希。具体的哈希算法采用LSH方法，将所有向量投影到一个球面，将球面切分为n个bucket，在同个bucket的向量具有相同的哈希值。为了在概率上降低误差，通过多次的随机旋转向量，来判断是否都处于同个bucket来确定向量是否具有相同哈希值。计算的过程中，不是按照bucket来划分，是按照chunk分块来划分，当前chunk会计算其以及前后两个chunk里处于同个bucket的attention。某种意义上限制了其计算间隔超过一个chunk但同处于一个bucket里的向量的attention，相当于强加一个先验。具体参考这两个[链接1](https://aijishu.com/a/1060000000097188)[链接2](https://thinkwee.top/2020/02/07/reformer/)
+
+
 
 
 
