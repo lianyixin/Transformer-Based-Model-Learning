@@ -146,14 +146,46 @@ xlnet主要解决bert在文本生成上的短板，以及预测训练不匹配�
 ![](https://image.jiqizhixin.com/uploads/editor/7bd7bcb7-72a5-4ef3-9c98-b4ef44debce7/640.png)
 
 ## Reformer
-reformer的起步思想主要是解决transformer在长序列问题计算效率、存储效率过低的问题。因此在深入了解reformer之前，需要了解为什么transformer或者更广泛来说神经网络占用memory很大。可以参考这篇文章的总结：https://zhuanlan.zhihu.com/p/31558973。
+reformer的起步思想主要是解决transformer在长序列问题计算效率、存储效率过低的问题。因此在深入了解reformer之前，需要了解为什么transformer或者更广泛来说神经网络占用memory很大。可以参考这篇[文章](https://zhuanlan.zhihu.com/p/31558973)的总结。
 
 在reformer文章里，作者主要提到：1. 最大transformer最大单层参数就占用2GB，输入的长序列64k token，1024embedding size，batch 8又要占用2GB。2.用来训练bert的corpus占用17GB。3. 实际transformer N层是单层的N倍，每一层的activation输出都要存储，因为计算反向梯度的时候会用到每一层的activation输出。4. 前馈层dff比注意力层dmodel深度更大，占用一大部分memory。5. 输入序列长度L的attention注意力计算就是O(L^2)，64k的序列输入就可以耗光memory。
 
-所以针对这些，reformer提出：
-1. 针对transformer N层结构需要存储N层activation，借鉴可逆层提出revnet来代替transformer的resnet结构，仅存储一层激活输出副本，反向推导出每一层的激活，用时间换空间的方式节省每一层激活的空间存储。具体参考这个[链接](https://www.cnblogs.com/gczr/p/12181354.html)
-2. 关于前馈层深度更深的问题，认为前馈层的计算独立于输入序列的各个位置，所以将activation分块成多个chunk，也是用时间换空间的方式，降低存储压力。同时将revnet的输入输出也分块。
-3. 针对计算自注意力时需要O(L^2)的时间和空间复杂度，考虑改进算法将其计算和空间复杂度提升到O(LlogL)。具体做法是认为softmax获得attention的方式是稀疏的，本质attention会比较关注权重较大的key，因此只要将attention权重最大的32或64个key找到即可。故而借鉴最近邻算法，用哈希方式将各个向量编码，通过排序的方式把相近的向量聚集在同个bucket。不过该方式无法保证每个bucket里一定有query或者key，作者将Q投影矩阵认为与K投影矩阵相等，因此相当于只在query或者key所有向量里做哈希。具体的哈希算法采用LSH方法，将所有向量投影到一个球面，将球面切分为n个bucket，在同个bucket的向量具有相同的哈希值。为了在概率上降低误差，通过多次的随机旋转向量，来判断是否都处于同个bucket来确定向量是否具有相同哈希值。计算的过程中，不是按照bucket来划分，是按照chunk分块来划分，当前chunk会计算其以及前后两个chunk里处于同个bucket的attention。某种意义上限制了其计算间隔超过一个chunk但同处于一个bucket里的向量的attention，相当于强加一个先验。具体参考这两个[链接1](https://aijishu.com/a/1060000000097188)[链接2](https://thinkwee.top/2020/02/07/reformer/)
+所以针对这些，reformer提出以下几个解决思路（具体也可以参考这两个[链接1](https://aijishu.com/a/1060000000097188)[链接2](https://thinkwee.top/2020/02/07/reformer/)）
+
+#### LSH算法(local sensitive hashing)
+针对计算自注意力时需要O(L^2)的时间和空间复杂度，考虑改进算法将其计算和空间复杂度提升到O(LlogL)。
+
+<img src="https://aijishu.com/img/bVzrN" width="500">
+
+具体做法是认为softmax获得attention的方式是稀疏的，本质attention会比较关注权重较大的key，因此只要将attention权重最大的32或64个key找到即可。故而借鉴最近邻算法，用哈希方式将各个向量编码，通过排序的方式把相近的向量聚集在同个bucket。不过该方式无法保证每个bucket里一定有query或者key，作者将**Q投影矩阵认为与K投影矩阵相等**，因此相当于只在query或者key所有向量里做哈希。
+
+具体的哈希算法采用LSH方法，将所有向量投影到一个球面，将球面切分为n个bucket，在同个bucket的向量具有相同的哈希值。为了在概率上降低误差，通过**多次的随机旋转向量**，来判断是否都处于同个bucket来确定向量是否具有相同哈希值。
+
+<img src="https://cdn-image.aijishu.com/306/886/3068862786-5e68f382e8939" width="500">
+
+reformer里面采用的是angular lsh的方案。同时因为有时候相似的向量会有小概率情况出现在不同buckets，所以用multiple rounds的并集来降低这种情况出现的概率。
+
+<img src="https://cdn-image.aijishu.com/238/448/2384483000-5e68f3ab1283c" width="500">
+
+计算的过程中，不是按照bucket来划分，是按照chunk分块来划分，当前chunk会计算其以及前后两个chunk里处于同个bucket的attention。某种意义上限制了其计算间隔超过一个chunk但同处于一个bucket里的向量的attention，相当于强加一个先验。需要注意的是，即使是传统的注意力模型，实际implement时也不是O(L*L)，为了减轻memory的压力，每次只计算一个qi，反向梯度计算时再重新计算。牺牲时间效率换取O(L)空间。
+
+<img src="https://cdn-image.aijishu.com/337/904/3379042569-5e68f3e038585" width="500">
+
+另一个需要注意的是，因为qk共享值，所以这边token对自己是没有attention的，如果有的话对自己的attention永远是最大的。
+
+#### revnet代替transformer的resnet结构
+transformer encoder decoder N层结构需要存储N层激活输出，使用revnet仅存储一层激活输出副本，反向推导出每一层的激活，用时间换空间的方式节省空间存储。revnet虽然改了网络结构，但是只对结果有微小差别。
+
+<img src="https://cdn-image.aijishu.com/301/592/301592411-5e68f277b35c9" width="500">
+
+普通网络及resnet结构，都无法通过输出反推出输入。将resnet结构改为revnet即可。在reformer架构里，F为注意力层，G为前馈层。Y₁= X₁+Attention(X₂) Y₂= X₂+FeedForward(Y₁)。同时注意layer normalization被移动到residual blocks里面了。
+
+<img src="https://cdn-image.aijishu.com/399/016/3990165106-5e68f479749ac" width="500">
+
+#### 分块
+前馈层的embedding维度比注意力层大很多，认为前馈层的计算独立于序列的各个位置，所以将输入输出分块成多个chunk，也是用时间换空间的方式，降低存储压力。因此revnet的输出以及注意力计算也是chunk分块。如果是large vocabulary，对log probability of outputs也分块。**分块只是影响工程实现，numerically identical to transformer**。因为reformer通常处理的序列长度和batch数量比较多，所以可以在计算过程中将没有用到的层参数转移到cpu。
+
+<img src="https://cdn-image.aijishu.com/335/040/3350400625-5e68f49ebe881" width="500">
 
 
 
